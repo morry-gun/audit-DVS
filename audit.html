@@ -836,7 +836,7 @@
   // ============================================================
   const SUPABASE_URL = 'https://flbyolpyyfebhhrfdhww.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_DOaX2qnQg8-0ypFMH-SKBw_Vqh_ZMhT';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let POINTS = [];
   let AUDITORS = [];
@@ -848,8 +848,8 @@
   // ============================================================
   async function loadData() {
     const [pointsRes, auditorsRes] = await Promise.all([
-      supabase.from('points').select('*').order('city'),
-      supabase.from('auditors').select('*').order('name'),
+      sb.from('points').select('*').order('city'),
+      sb.from('auditors').select('*').order('name'),
     ]);
     if (pointsRes.data) POINTS = pointsRes.data;
     if (auditorsRes.data) AUDITORS = auditorsRes.data;
@@ -1200,7 +1200,7 @@
     }
 
     // Save audit
-    const { data: audit, error } = await supabase.from('audits').insert(auditData).select().single();
+    const { data: audit, error } = await sb.from('audits').insert(auditData).select().single();
     if (error) {
       console.error(error);
       showToast('Ошибка сохранения: ' + error.message);
@@ -1219,9 +1219,9 @@
       const ext = file.name.split('.').pop() || 'jpg';
       const path = `audit-${audit.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-      const { error: uploadErr } = await supabase.storage.from('audit-photos').upload(path, file);
+      const { error: uploadErr } = await sb.storage.from('audit-photos').upload(path, file);
       if (!uploadErr) {
-        await supabase.from('photos').insert({ audit_id: audit.id, label: label, file_path: path });
+        await sb.from('photos').insert({ audit_id: audit.id, label: label, file_path: path });
       }
     }
 
