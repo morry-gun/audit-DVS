@@ -540,36 +540,85 @@
     document.getElementById('modalOverlay').classList.remove('open');
   }
 
+  function calcSubScores(a) {
+    if (a.point_status !== 'Работает') return { equip: null, product: null, staff: null, total: null };
+    const pill = (val, map) => val != null && map[val] != null ? map[val] : 0;
+    const scale = v => v != null ? (v - 1) * 0.75 : 0;
+
+    const equipMax = 3 * 4;
+    const equipTotal = pill(a.q1, {'Новые':3,'новые':3,'Старые':1.5,'старые':1.5,'Нет':0,'нет':0})
+      + pill(a.q2, {'OK':3,'повреждение':0,'Повреждение':0})
+      + pill(a.q4, {'Новый':3,'новый':3,'Старый':0,'старый':0})
+      + pill(a.q6, {'OK':3,'Плохо':0,'плохо':0});
+    const equipScore = Math.round((equipTotal / equipMax) * 5);
+
+    const prodMax = 3 * 5;
+    const prodTotal = pill(a.q3, {'OK':3,'Нехватка':1.5,'нехватка':1.5,'Критично':0,'критично':0})
+      + pill(a.q5, {'OK':3,'Просрочен':0})
+      + pill(a.q7, {'Да':3,'да':3,'Нет':0,'нет':0})
+      + pill(a.q8, {'Да':3,'да':3,'Нет':0,'нет':0})
+      + pill(a.q9, {'OK':3,'Нехватка':1.5,'нехватка':1.5,'Критично':0,'критично':0});
+    const prodScore = Math.round((prodTotal / prodMax) * 5);
+
+    const staffMax = 3 * 2 + 3 * 3;
+    const staffTotal = pill(a.q10, {'OK':3,'Грязные':1.5,'грязные':1.5,'Сломаны':0,'сломаны':0})
+      + pill(a.q13, {'Да':3,'да':3,'Нет':0,'нет':0})
+      + scale(a.q11) + scale(a.q12) + scale(a.q14) + scale(a.q15);
+    const staffScore = Math.round((staffTotal / staffMax) * 5);
+
+    const total = getScore(a);
+    return { equip: equipScore, product: prodScore, staff: staffScore, total };
+  }
+
   function exportToExcel() {
     if (filteredAudits.length === 0) { showToast('Нет данных для выгрузки'); return; }
 
-    const headers = ['Дата', 'Время', 'Регион', 'Город', 'Адрес', 'Локация', 'Тип', 'Волна', 'Аудитор', 'Тип аудитора', 'Статус',
-      'Чехлы', 'Конструкция', 'Декор', 'Актуальность декора', 'Срок годности', 'Вид декора',
-      'Шоколад', 'Мороженое', 'Расходники', 'Треи',
-      'Чистота (1-5)', 'Брендбук (1-5)', 'Наличие персонала', 'Вид персонала (1-5)', 'Знание продукта (1-5)',
-      'Оценка %', 'Критичность', 'Проблема', 'Действие', 'Ответственный', 'Комментарий', 'Кол-во фото'];
+    const headers = [
+      'Источник файла', '№', 'Тип объекта', 'Регион', 'Город', 'RTM', 'Филиал',
+      'Инициатор / менеджер', 'Описание локации', 'Юр.лицо клиента', 'Адрес',
+      'Решение', 'Дата установки', 'Статус установки', 'Тип конструкции 2026',
+      'Кол-во конструкций 2025', 'Плановая дата установки', 'Плановая дата завершения',
+      'Комментарий',
+      'Дата аудита', 'Волна', 'Аудитор', 'Тип аудитора', 'Статус точки',
+      'Чехлы', 'Состояние конструкции', 'Декор - актуальность', 'Декор - срок',
+      'Декор - визуальный вид', 'Шоколад', 'Мороженое', 'Расходники', 'Треи',
+      'Чистота точки (1-5)', 'Соответствие брендбуку (1-5)', 'Есть персонал',
+      'Внешний вид (1-5)', 'Знание продукта (1-5)',
+      'Score оборудование', 'Score продукт', 'Score персонал', 'Общий Score',
+      'Критичность', 'Что нужно сделать', 'Ответственный', 'Срок исправления',
+      'Ссылка на фото', 'Фото проверено', 'Key'
+    ];
 
-    const rows = filteredAudits.map(a => [
-      a.audit_date || '', a.audit_time ? a.audit_time.slice(0,5) : '', a.region || '', a.city || '', a.address || '', a.location || '',
-      a.point_type || '', a.wave || '', a.auditor_name || '', a.auditor_type || '', a.point_status || '',
-      a.q1 || '', a.q2 || '', a.q3 || '', a.q4 || '', a.q5 || '', a.q6 || '',
-      a.q7 || '', a.q8 || '', a.q9 || '', a.q10 || '',
-      a.q11 || '', a.q12 || '', a.q13 || '', a.q14 || '', a.q15 || '',
-      getScore(a) ?? '', a.severity || '', a.problem_desc || '', a.problem_action || '', a.problem_who || '',
-      a.comment || '', photoCountMap[a.id] || 0
-    ]);
+    const rows = filteredAudits.map((a, i) => {
+      const sc = calcSubScores(a);
+      const key = [a.region, a.city, a.location, a.address].filter(Boolean).join('|').toLowerCase();
+      const photoLink = photoCountMap[a.id] ? SUPABASE_URL + '/storage/v1/object/public/audit-photos/' : '';
+      return [
+        'audit-dvs', i + 1, a.point_type || '', a.region || '', a.city || '',
+        '', '', '', a.location || '', '', a.address || '',
+        '', '', '', '', '', '', '', a.comment || '',
+        a.audit_date || '', a.wave || '', a.auditor_name || '', a.auditor_type || '', a.point_status || '',
+        a.q1 || '', a.q2 || '', a.q4 || '', a.q5 || '',
+        a.q6 || '', a.q7 || '', a.q8 || '', a.q9 || '', a.q10 || '',
+        a.q11 || '', a.q12 || '', a.q13 || '', a.q14 || '', a.q15 || '',
+        sc.equip ?? '', sc.product ?? '', sc.staff ?? '', sc.total ?? '',
+        a.severity || '', a.problem_desc || '', a.problem_who || '', a.exp_date || '',
+        photoLink, '', key
+      ];
+    });
 
     const BOM = '﻿';
+    const SEP = ';';
     const esc = v => {
       const s = String(v == null ? '' : v);
-      return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+      return s.includes(SEP) || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
-    const csv = BOM + [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\r\n');
+    const csv = BOM + [headers.map(esc).join(SEP), ...rows.map(r => r.map(esc).join(SEP))].join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'audits_magnat_' + new Date().toISOString().slice(0, 10) + '.csv';
+    link.download = 'Аудит_МБ_КДО_' + new Date().toISOString().slice(0, 10) + '.csv';
     link.click();
     URL.revokeObjectURL(url);
     showToast('Файл скачивается...');
