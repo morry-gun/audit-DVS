@@ -316,6 +316,7 @@
     .container { padding: 24px 24px 120px; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -831,36 +832,29 @@
 
 <script>
   // ============================================================
-  // DATA: Points and auditors (will come from database in production)
+  // SUPABASE INIT
   // ============================================================
-  const POINTS = [
-    { id: 1, type: 'МБ', region: 'Московская область', city: 'Москва', location: 'ТЦ Авиапарк, 1 этаж', address: 'Ходынский бульвар, 4' },
-    { id: 2, type: 'МБ', region: 'Московская область', city: 'Москва', location: 'Парк Горького, центральная аллея', address: 'ул. Крымский Вал, 9' },
-    { id: 3, type: 'КДО', region: 'Московская область', city: 'Москва', location: 'ТЦ Мега Тёплый Стан', address: 'Калужское шоссе, 21 км' },
-    { id: 4, type: 'МБ', region: 'Ленинградская область', city: 'Санкт-Петербург', location: 'Невский проспект, у метро', address: 'Невский проспект, 114' },
-    { id: 5, type: 'КДО', region: 'Ленинградская область', city: 'Санкт-Петербург', location: 'ТЦ Галерея, 2 этаж', address: 'Лиговский проспект, 30А' },
-    { id: 6, type: 'МБ', region: 'Новосибирская область', city: 'Новосибирск', location: 'ТЦ Аура, 1 этаж', address: 'ул. Военная, 5' },
-    { id: 7, type: 'КДО', region: 'Свердловская область', city: 'Екатеринбург', location: 'ТЦ Гринвич, фудкорт', address: 'ул. 8 Марта, 46' },
-    { id: 8, type: 'МБ', region: 'Краснодарский край', city: 'Краснодар', location: 'ТЦ Красная площадь', address: 'ул. Дзержинского, 100' },
-    { id: 9, type: 'КДО', region: 'Республика Татарстан', city: 'Казань', location: 'ТЦ Мега, 1 этаж', address: 'Проспект Победы, 141' },
-    { id: 10, type: 'МБ', region: 'Нижегородская область', city: 'Нижний Новгород', location: 'ТЦ Небо, фудкорт', address: 'ул. Большая Покровская, 82' },
-    { id: 11, type: 'МБ', region: 'Самарская область', city: 'Самара', location: 'ТЦ Космопорт', address: 'ул. Дыбенко, 30' },
-    { id: 12, type: 'КДО', region: 'Ростовская область', city: 'Ростов-на-Дону', location: 'ТЦ Горизонт, 1 этаж', address: 'проспект Нагибина, 32/2' },
-  ];
+  const SUPABASE_URL = 'https://flbyolpyyfebhhrfdhww.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_DOaX2qnQg8-0ypFMH-SKBw_Vqh_ZMhT';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const AUDITORS = [
-    { name: 'Иванова Мария Сергеевна', type: 'Агентство' },
-    { name: 'Петров Дмитрий Александрович', type: 'Сотрудник' },
-    { name: 'Сидорова Анна Викторовна', type: 'Агентство' },
-    { name: 'Козлов Артём Игоревич', type: 'Сотрудник' },
-    { name: 'Новикова Елена Павловна', type: 'Агентство' },
-    { name: 'Морозов Кирилл Дмитриевич', type: 'Агентство' },
-    { name: 'Волкова Дарья Олеговна', type: 'Сотрудник' },
-    { name: 'Алексеев Максим Андреевич', type: 'Агентство' },
-  ];
-
+  let POINTS = [];
+  let AUDITORS = [];
   let selectedPoint = null;
   let selectedAuditor = null;
+
+  // ============================================================
+  // Load data from Supabase
+  // ============================================================
+  async function loadData() {
+    const [pointsRes, auditorsRes] = await Promise.all([
+      supabase.from('points').select('*').order('city'),
+      supabase.from('auditors').select('*').order('name'),
+    ]);
+    if (pointsRes.data) POINTS = pointsRes.data;
+    if (auditorsRes.data) AUDITORS = auditorsRes.data;
+  }
+  loadData();
 
   // ============================================================
   // Auto date/time
@@ -1110,19 +1104,49 @@
   }
 
   // ============================================================
+  // Score calculation
+  // ============================================================
+  function calcScore(data) {
+    const pillScores = {
+      q1: { 'Новые': 3, 'Старые': 1.5, 'Нет': 0 },
+      q2: { 'OK': 3, 'Повреждение': 0 },
+      q3: { 'OK': 3, 'Нехватка': 1.5, 'Критично': 0 },
+      q4: { 'Новый': 3, 'Старый': 0 },
+      q5: { 'OK': 3, 'Просрочен': 0 },
+      q6: { 'OK': 3, 'Плохо': 0 },
+      q7: { 'Да': 3, 'Нет': 0 },
+      q8: { 'Да': 3, 'Нет': 0 },
+      q9: { 'OK': 3, 'Нехватка': 1.5, 'Критично': 0 },
+      q10: { 'OK': 3, 'Грязные': 1.5, 'Сломаны': 0 },
+      q13: { 'Да': 3, 'Нет': 0 },
+    };
+    let total = 0, max = 0;
+    for (const [key, map] of Object.entries(pillScores)) {
+      max += 3;
+      if (data[key] && map[data[key]] != null) total += map[data[key]];
+    }
+    ['q11','q12','q14','q15'].forEach(key => {
+      max += 3;
+      if (data[key]) total += (data[key] - 1) * 0.75;
+    });
+    return max > 0 ? Math.round((total / max) * 100) : null;
+  }
+
+  // ============================================================
   // Submit
   // ============================================================
-  function submitForm() {
+  async function submitForm() {
+    const btn = document.getElementById('submitBtn');
     if (!selectedPoint) { showToast('Выберите точку из списка'); return; }
     if (!selectedAuditor && !document.getElementById('auditorInput').value.trim()) {
       showToast('Выберите аудитора'); return;
     }
+
     let filled = 0;
     for (let i = 1; i <= 15; i++) {
       const cn = document.getElementById('cn' + i);
       if (cn && cn.classList.contains('filled')) filled++;
     }
-    // If point not working, checklist is optional
     const statusPill = document.querySelector('[data-field="point_status"] .selected-green, [data-field="point_status"] .selected-amber, [data-field="point_status"] .selected-coral');
     const status = statusPill ? statusPill.textContent.trim() : '';
     if (status === 'Работает' && filled < 15) {
@@ -1130,21 +1154,78 @@
       return;
     }
 
-    const data = {
-      timestamp: new Date().toISOString(),
-      point: selectedPoint,
-      auditor: selectedAuditor ? selectedAuditor.name : document.getElementById('auditorInput').value.trim(),
-      comment: document.getElementById('auditor_comment')?.value,
-    };
+    btn.disabled = true;
+    btn.textContent = 'Отправка...';
+
+    // Collect field values
+    const fields = {};
     document.querySelectorAll('[data-field]').forEach(container => {
       const selected = container.querySelector('.selected, .selected-green, .selected-coral, .selected-amber');
-      if (selected) data[container.dataset.field] = selected.textContent.trim();
+      if (selected) fields[container.dataset.field] = selected.textContent.trim();
     });
 
-    const audits = JSON.parse(localStorage.getItem('audits') || '[]');
-    audits.push(data);
-    localStorage.setItem('audits', JSON.stringify(audits));
+    const now = new Date();
+    const auditData = {
+      point_id: selectedPoint.id,
+      point_type: selectedPoint.type,
+      region: selectedPoint.region,
+      city: selectedPoint.city,
+      location: selectedPoint.location,
+      address: selectedPoint.address,
+      audit_date: now.toISOString().split('T')[0],
+      audit_time: now.toTimeString().slice(0, 5),
+      wave: fields.wave || null,
+      auditor_name: selectedAuditor ? selectedAuditor.name : document.getElementById('auditorInput').value.trim(),
+      auditor_type: fields.auditor_type || null,
+      point_status: fields.point_status || null,
+      q1: fields.q1 || null, q2: fields.q2 || null, q3: fields.q3 || null,
+      q4: fields.q4 || null, q5: fields.q5 || null, q6: fields.q6 || null,
+      q7: fields.q7 || null, q8: fields.q8 || null, q9: fields.q9 || null,
+      q10: fields.q10 || null,
+      q11: fields.q11 ? parseInt(fields.q11) : null,
+      q12: fields.q12 ? parseInt(fields.q12) : null,
+      q13: fields.q13 || null,
+      q14: fields.q14 ? parseInt(fields.q14) : null,
+      q15: fields.q15 ? parseInt(fields.q15) : null,
+      exp_date: document.getElementById('exp_date')?.value || null,
+      severity: fields.severity || null,
+      problem_desc: document.getElementById('problem_desc')?.value || null,
+      problem_action: document.getElementById('problem_action')?.value || null,
+      problem_who: document.getElementById('problem_who')?.value || null,
+      comment: document.getElementById('auditor_comment')?.value || null,
+    };
 
+    if (status === 'Работает') {
+      auditData.score = calcScore(auditData);
+    }
+
+    // Save audit
+    const { data: audit, error } = await supabase.from('audits').insert(auditData).select().single();
+    if (error) {
+      console.error(error);
+      showToast('Ошибка сохранения: ' + error.message);
+      btn.disabled = false;
+      btn.textContent = 'Отправить аудит';
+      return;
+    }
+
+    // Upload photos
+    const photoSlots = document.querySelectorAll('.photo-slot.has-photo, .photo-single.has-photo');
+    for (const slot of photoSlots) {
+      const input = slot.querySelector('input[type="file"]');
+      const file = input?.files?.[0];
+      if (!file) continue;
+      const label = slot.querySelector('.label')?.textContent || 'фото';
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `audit-${audit.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage.from('audit-photos').upload(path, file);
+      if (!uploadErr) {
+        await supabase.from('photos').insert({ audit_id: audit.id, label: label, file_path: path });
+      }
+    }
+
+    // Show success
     document.getElementById('formContainer').style.display = 'none';
     document.getElementById('submitArea').style.display = 'none';
     document.getElementById('successScreen').classList.add('visible');

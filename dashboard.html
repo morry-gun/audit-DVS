@@ -209,6 +209,7 @@
     .filter-spacer { display: none; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -306,7 +307,7 @@
     <div class="empty-state" id="emptyState" style="display:none">
       <div class="empty-icon">&#128203;</div>
       <div class="empty-title">Пока нет аудитов</div>
-      <div class="empty-sub">Данные появятся здесь после первых проверок. В демо-режиме загружены тестовые данные.</div>
+      <div class="empty-sub">Данные появятся здесь после первых проверок.</div>
     </div>
   </div>
 
@@ -324,42 +325,33 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // ============================================================
-  // DEMO DATA
-  // ============================================================
-  const DEMO_AUDITS = [
-    { id: 1, date: '2026-06-15', time: '10:30', city: 'Москва', location: 'ТЦ Авиапарк, 1 этаж', address: 'Ходынский бульвар, 4', type: 'МБ', wave: '1 волна', auditor: 'Иванова Мария Сергеевна', auditor_type: 'Агентство', status: 'Работает',
-      q1: 'Новые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 5, q12: 5, q13: 'Да', q14: 5, q15: 4, comment: 'Точка в отличном состоянии, продавец приветливый.', photos: 3 },
-    { id: 2, date: '2026-06-15', time: '14:15', city: 'Москва', location: 'Парк Горького', address: 'ул. Крымский Вал, 9', type: 'МБ', wave: '1 волна', auditor: 'Иванова Мария Сергеевна', auditor_type: 'Агентство', status: 'Работает',
-      q1: 'Старые', q2: 'OK', q3: 'Нехватка', q4: 'Новый', q5: 'OK', q6: 'Плохо', q7: 'Да', q8: 'Да', q9: 'Нехватка', q10: 'Грязные', q11: 3, q12: 3, q13: 'Да', q14: 3, q15: 3, comment: 'Чехлы грязные, декора не хватает, стаканчики заканчиваются.', severity: 'Средняя', problem: 'Грязные чехлы, нехватка декора и стаканов', photos: 5 },
-    { id: 3, date: '2026-06-16', time: '11:00', city: 'Санкт-Петербург', location: 'Невский проспект, у метро', address: 'Невский проспект, 114', type: 'МБ', wave: '1 волна', auditor: 'Петров Дмитрий Александрович', auditor_type: 'Сотрудник', status: 'Работает',
-      q1: 'Новые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 5, comment: 'Всё хорошо, мелкие недочеты по чистоте.', photos: 4 },
-    { id: 4, date: '2026-06-16', time: '15:30', city: 'Санкт-Петербург', location: 'ТЦ Галерея, 2 этаж', address: 'Лиговский проспект, 30А', type: 'КДО', wave: '1 волна', auditor: 'Петров Дмитрий Александрович', auditor_type: 'Сотрудник', status: 'Работает',
-      q1: 'Новые', q2: 'Повреждение', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Нет', q8: 'Да', q9: 'OK', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 3, comment: 'Повреждена подсветка на стойке. Шоколада нет в наличии.', severity: 'Средняя', problem: 'Не работает подсветка, отсутствует шоколад', photos: 4 },
-    { id: 5, date: '2026-06-17', time: '09:45', city: 'Новосибирск', location: 'ТЦ Аура, 1 этаж', address: 'ул. Военная, 5', type: 'МБ', wave: '1 волна', auditor: 'Сидорова Анна Викторовна', auditor_type: 'Агентство', status: 'Работает',
-      q1: 'Нет', q2: 'Повреждение', q3: 'Критично', q4: 'Старый', q5: 'Просрочен', q6: 'Плохо', q7: 'Нет', q8: 'Да', q9: 'Критично', q10: 'Сломаны', q11: 1, q12: 1, q13: 'Да', q14: 2, q15: 2, comment: 'Критическое состояние точки. Нет чехлов, конструкция повреждена, декор просрочен, нет шоколада, расходники закончились.', severity: 'Критическая', problem: 'Множественные нарушения, точка требует срочного вмешательства', photos: 6 },
-    { id: 6, date: '2026-06-17', time: '13:00', city: 'Екатеринбург', location: 'ТЦ Гринвич, фудкорт', address: 'ул. 8 Марта, 46', type: 'КДО', wave: '1 волна', auditor: 'Козлов Артём Игоревич', auditor_type: 'Сотрудник', status: 'Временно не работает',
-      q1: null, q2: null, q3: null, q4: null, q5: null, q6: null, q7: null, q8: null, q9: null, q10: null, q11: null, q12: null, q13: null, q14: null, q15: null, comment: 'Точка закрыта на ремонт фудкорта. Ориентировочно откроют через 2 недели.', photos: 2 },
-    { id: 7, date: '2026-06-18', time: '10:00', city: 'Краснодар', location: 'ТЦ Красная площадь', address: 'ул. Дзержинского, 100', type: 'МБ', wave: '1 волна', auditor: 'Новикова Елена Павловна', auditor_type: 'Агентство', status: 'Работает',
-      q1: 'Новые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 5, q12: 5, q13: 'Да', q14: 5, q15: 5, comment: 'Идеальная точка, лучшая из проверенных.', photos: 3 },
-    { id: 8, date: '2026-06-18', time: '14:30', city: 'Казань', location: 'ТЦ Мега, 1 этаж', address: 'Проспект Победы, 141', type: 'КДО', wave: '1 волна', auditor: 'Морозов Кирилл Дмитриевич', auditor_type: 'Агентство', status: 'Работает',
-      q1: 'Старые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 4, comment: 'Чехлы чуть потёртые, остальное в порядке.', photos: 3 },
-    { id: 9, date: '2026-07-01', time: '11:00', city: 'Москва', location: 'ТЦ Мега Тёплый Стан', address: 'Калужское шоссе, 21 км', type: 'КДО', wave: '2 волна', auditor: 'Иванова Мария Сергеевна', auditor_type: 'Агентство', status: 'Работает',
-      q1: 'Новые', q2: 'OK', q3: 'Нехватка', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'Нехватка', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 4, comment: 'Не хватает части декора и ложек. Остальное ОК.', severity: 'Низкая', problem: 'Нехватка декора и ложек', photos: 4 },
-    { id: 10, date: '2026-07-02', time: '09:30', city: 'Нижний Новгород', location: 'ТЦ Небо, фудкорт', address: 'ул. Большая Покровская, 82', type: 'МБ', wave: '2 волна', auditor: 'Волкова Дарья Олеговна', auditor_type: 'Сотрудник', status: 'Не найдена',
-      q1: null, q2: null, q3: null, q4: null, q5: null, q6: null, q7: null, q8: null, q9: null, q10: null, q11: null, q12: null, q13: null, q14: null, q15: null, comment: 'По указанному адресу точка не обнаружена. Возможно, переехала.', photos: 1 },
-  ];
+  const SUPABASE_URL = 'https://flbyolpyyfebhhrfdhww.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_DOaX2qnQg8-0ypFMH-SKBw_Vqh_ZMhT';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let allAudits = DEMO_AUDITS;
-  let filteredAudits = [...allAudits];
+  let allAudits = [];
+  let filteredAudits = [];
+  let photoCountMap = {};
 
-  // ============================================================
-  // Score calculation
-  // ============================================================
-  function calcScore(a) {
-    if (a.status !== 'Работает') return null;
+  async function loadData() {
+    const { data: audits, error } = await sb.from('audits').select('*').order('audit_date', { ascending: false });
+    if (error) { console.error('Ошибка загрузки:', error); return; }
+    allAudits = audits || [];
+
+    const { data: photos } = await sb.from('photos').select('audit_id');
+    photoCountMap = {};
+    if (photos) photos.forEach(p => { photoCountMap[p.audit_id] = (photoCountMap[p.audit_id] || 0) + 1; });
+
+    filteredAudits = [...allAudits];
+    populateFilters();
+    renderStats();
+    renderTable();
+  }
+
+  function getScore(a) {
+    if (a.score != null) return a.score;
+    if (a.point_status !== 'Работает') return null;
     let total = 0, max = 0;
-    // Pills: positive = 3pts, warning = 1.5pts, negative = 0pts
     const pillScores = {
       q1: { 'Новые': 3, 'Старые': 1.5, 'Нет': 0 },
       q2: { 'OK': 3, 'Повреждение': 0 },
@@ -377,7 +369,6 @@
       max += 3;
       if (a[key] != null && map[a[key]] != null) total += map[a[key]];
     }
-    // Scales: 1-5 (mapped to 0-3)
     ['q11','q12','q14','q15'].forEach(key => {
       max += 3;
       if (a[key] != null) total += (a[key] - 1) * 0.75;
@@ -399,12 +390,9 @@
     return `<span class="badge ${map[status] || 'warn'}">${status}</span>`;
   }
 
-  // ============================================================
-  // Render
-  // ============================================================
   function renderStats() {
-    const working = filteredAudits.filter(a => a.status === 'Работает');
-    const scores = working.map(a => calcScore(a)).filter(s => s !== null);
+    const working = filteredAudits.filter(a => a.point_status === 'Работает');
+    const scores = working.map(a => getScore(a)).filter(s => s !== null);
     const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
 
     document.getElementById('statTotal').textContent = filteredAudits.length;
@@ -427,33 +415,35 @@
     document.getElementById('tableCount').textContent = filteredAudits.length + ' шт.';
 
     tbody.innerHTML = filteredAudits.map(a => {
-      const score = calcScore(a);
-      const d = new Date(a.date + 'T' + (a.time || '00:00'));
-      const dateStr = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+      const score = getScore(a);
+      const dateStr = a.audit_date ? new Date(a.audit_date + 'T00:00').toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) : '—';
       return `<tr onclick="openDetail(${a.id})">
         <td>${dateStr}</td>
-        <td>${a.city}</td>
-        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.location}</td>
-        <td>${a.type}</td>
+        <td>${a.city || '—'}</td>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.location || '—'}</td>
+        <td>${a.point_type || '—'}</td>
         <td>${a.wave || '—'}</td>
-        <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.auditor}</td>
-        <td>${statusBadge(a.status)}</td>
+        <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.auditor_name || '—'}</td>
+        <td>${statusBadge(a.point_status || '—')}</td>
         <td>${scoreBadge(score)}</td>
       </tr>`;
     }).join('');
   }
 
   function populateFilters() {
-    const cities = [...new Set(allAudits.map(a => a.city))].sort();
     const citySelect = document.getElementById('filterCity');
+    const audSelect = document.getElementById('filterAuditor');
+    citySelect.innerHTML = '<option value="">Все города</option>';
+    audSelect.innerHTML = '<option value="">Все аудиторы</option>';
+
+    const cities = [...new Set(allAudits.map(a => a.city).filter(Boolean))].sort();
     cities.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c; opt.textContent = c;
       citySelect.appendChild(opt);
     });
 
-    const auditors = [...new Set(allAudits.map(a => a.auditor))].sort();
-    const audSelect = document.getElementById('filterAuditor');
+    const auditors = [...new Set(allAudits.map(a => a.auditor_name).filter(Boolean))].sort();
     auditors.forEach(a => {
       const opt = document.createElement('option');
       opt.value = a; opt.textContent = a.split(' ').slice(0, 2).join(' ');
@@ -470,22 +460,19 @@
     filteredAudits = allAudits.filter(a => {
       if (city && a.city !== city) return false;
       if (wave && a.wave !== wave) return false;
-      if (status && a.status !== status) return false;
-      if (auditor && a.auditor !== auditor) return false;
+      if (status && a.point_status !== status) return false;
+      if (auditor && a.auditor_name !== auditor) return false;
       return true;
     });
     renderStats();
     renderTable();
   }
 
-  // ============================================================
-  // Detail modal
-  // ============================================================
-  function openDetail(id) {
+  async function openDetail(id) {
     const a = allAudits.find(x => x.id === id);
     if (!a) return;
-    const score = calcScore(a);
-    document.getElementById('modalTitle').textContent = a.city + ' — ' + a.location;
+    const score = getScore(a);
+    document.getElementById('modalTitle').textContent = (a.city || '') + ' — ' + (a.location || '');
 
     const checkItems = [
       ['Чехлы', a.q1], ['Конструкция', a.q2], ['Декор', a.q3], ['Актуальность декора', a.q4],
@@ -495,30 +482,33 @@
       ['Вид персонала', a.q14 ? a.q14 + '/5' : '—'], ['Знание продукта', a.q15 ? a.q15 + '/5' : '—'],
     ];
 
+    const timeStr = a.audit_time ? a.audit_time.slice(0, 5) : '';
     let html = `
       <div class="modal-section">
         <div class="modal-section-title">Информация</div>
-        <div class="modal-row"><span class="modal-row-label">Дата</span><span class="modal-row-value">${a.date} ${a.time || ''}</span></div>
-        <div class="modal-row"><span class="modal-row-label">Адрес</span><span class="modal-row-value">${a.address}</span></div>
-        <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${a.type}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Дата</span><span class="modal-row-value">${a.audit_date || '—'} ${timeStr}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Адрес</span><span class="modal-row-value">${a.address || '—'}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${a.point_type || '—'}</span></div>
         <div class="modal-row"><span class="modal-row-label">Волна</span><span class="modal-row-value">${a.wave || '—'}</span></div>
-        <div class="modal-row"><span class="modal-row-label">Аудитор</span><span class="modal-row-value">${a.auditor}</span></div>
-        <div class="modal-row"><span class="modal-row-label">Статус</span><span class="modal-row-value">${statusBadge(a.status)}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Аудитор</span><span class="modal-row-value">${a.auditor_name || '—'}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Статус</span><span class="modal-row-value">${statusBadge(a.point_status || '—')}</span></div>
         <div class="modal-row"><span class="modal-row-label">Оценка</span><span class="modal-row-value">${score !== null ? score + '%' : 'N/A'}</span></div>
       </div>`;
 
-    if (a.status === 'Работает') {
+    if (a.point_status === 'Работает') {
       html += `<div class="modal-section">
         <div class="modal-section-title">Чек-лист</div>
         ${checkItems.map(([label, val]) => `<div class="modal-row"><span class="modal-row-label">${label}</span><span class="modal-row-value">${val || '—'}</span></div>`).join('')}
       </div>`;
     }
 
-    if (a.problem) {
+    if (a.problem_desc) {
       html += `<div class="modal-section">
         <div class="modal-section-title">Проблемы</div>
         <div class="modal-row"><span class="modal-row-label">Критичность</span><span class="modal-row-value">${a.severity || '—'}</span></div>
-        <div class="modal-row"><span class="modal-row-label">Описание</span><span class="modal-row-value" style="text-align:left;max-width:300px">${a.problem}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Описание</span><span class="modal-row-value" style="text-align:left;max-width:300px">${a.problem_desc}</span></div>
+        ${a.problem_action ? `<div class="modal-row"><span class="modal-row-label">Действие</span><span class="modal-row-value" style="text-align:left;max-width:300px">${a.problem_action}</span></div>` : ''}
+        ${a.problem_who ? `<div class="modal-row"><span class="modal-row-label">Ответственный</span><span class="modal-row-value">${a.problem_who}</span></div>` : ''}
       </div>`;
     }
 
@@ -529,13 +519,16 @@
       </div>`;
     }
 
-    if (a.photos) {
+    const { data: photoRows } = await sb.from('photos').select('*').eq('audit_id', id);
+    if (photoRows && photoRows.length > 0) {
       html += `<div class="modal-section">
-        <div class="modal-section-title">Фото (${a.photos})</div>
+        <div class="modal-section-title">Фото (${photoRows.length})</div>
         <div class="modal-photos">
-          ${Array.from({length: Math.min(a.photos, 6)}, (_, i) => `<div class="modal-photo" style="background:var(--surface);font-size:11px">Фото ${i+1}</div>`).join('')}
+          ${photoRows.map(p => {
+            const url = SUPABASE_URL + '/storage/v1/object/public/audit-photos/' + p.file_path;
+            return `<div class="modal-photo"><img src="${url}" alt="${p.label || 'Фото'}" loading="lazy"></div>`;
+          }).join('')}
         </div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">В демо-режиме фото не загружены. В боевой версии здесь будут реальные снимки.</div>
       </div>`;
     }
 
@@ -547,25 +540,25 @@
     document.getElementById('modalOverlay').classList.remove('open');
   }
 
-  // ============================================================
-  // EXCEL EXPORT
-  // ============================================================
   function exportToExcel() {
-    const headers = ['Дата', 'Время', 'Город', 'Адрес', 'Локация', 'Тип', 'Волна', 'Аудитор', 'Тип аудитора', 'Статус',
+    if (filteredAudits.length === 0) { showToast('Нет данных для выгрузки'); return; }
+
+    const headers = ['Дата', 'Время', 'Регион', 'Город', 'Адрес', 'Локация', 'Тип', 'Волна', 'Аудитор', 'Тип аудитора', 'Статус',
       'Чехлы', 'Конструкция', 'Декор', 'Актуальность декора', 'Срок годности', 'Вид декора',
       'Шоколад', 'Мороженое', 'Расходники', 'Треи',
       'Чистота (1-5)', 'Брендбук (1-5)', 'Наличие персонала', 'Вид персонала (1-5)', 'Знание продукта (1-5)',
-      'Оценка %', 'Критичность', 'Проблема', 'Комментарий', 'Кол-во фото'];
+      'Оценка %', 'Критичность', 'Проблема', 'Действие', 'Ответственный', 'Комментарий', 'Кол-во фото'];
 
     const rows = filteredAudits.map(a => [
-      a.date, a.time || '', a.city, a.address, a.location, a.type, a.wave || '', a.auditor, a.auditor_type || '', a.status,
+      a.audit_date || '', a.audit_time ? a.audit_time.slice(0,5) : '', a.region || '', a.city || '', a.address || '', a.location || '',
+      a.point_type || '', a.wave || '', a.auditor_name || '', a.auditor_type || '', a.point_status || '',
       a.q1 || '', a.q2 || '', a.q3 || '', a.q4 || '', a.q5 || '', a.q6 || '',
       a.q7 || '', a.q8 || '', a.q9 || '', a.q10 || '',
       a.q11 || '', a.q12 || '', a.q13 || '', a.q14 || '', a.q15 || '',
-      calcScore(a) || '', a.severity || '', a.problem || '', a.comment || '', a.photos || 0
+      getScore(a) ?? '', a.severity || '', a.problem_desc || '', a.problem_action || '', a.problem_who || '',
+      a.comment || '', photoCountMap[a.id] || 0
     ]);
 
-    // Generate CSV (BOM for Excel compatibility)
     const BOM = '﻿';
     const esc = v => {
       const s = String(v == null ? '' : v);
@@ -579,7 +572,6 @@
     link.download = 'audits_magnat_' + new Date().toISOString().slice(0, 10) + '.csv';
     link.click();
     URL.revokeObjectURL(url);
-
     showToast('Файл скачивается...');
   }
 
@@ -590,12 +582,7 @@
     setTimeout(() => t.classList.remove('visible'), 2500);
   }
 
-  // ============================================================
-  // Init
-  // ============================================================
-  populateFilters();
-  renderStats();
-  renderTable();
+  loadData();
 </script>
 </body>
 </html>
