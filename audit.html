@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Аудит точки — Магнат Бар / КДО</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<style>
+  :root {
+    --blue: #2C5FE8;
+    --blue-light: #EBF0FF;
+    --blue-muted: #96AEEF;
+    --coral: #E8554A;
+    --coral-light: #FFF0EF;
+    --amber: #E89C2C;
+    --amber-light: #FFF6E5;
+    --green: #2BA84A;
+    --green-light: #EDFDF2;
+    --surface: #F5F6FA;
+    --card: #FFFFFF;
+    --text: #1B2640;
+    --text-secondary: #5E6A81;
+    --border: #D8DCE6;
+    --border-light: #ECEEF3;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(27,38,64,.06), 0 1px 2px rgba(27,38,64,.04);
+    --shadow-lg: 0 4px 12px rgba(27,38,64,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #111827; --card: #1E2736; --text: #E8ECF3;
+      --text-secondary: #8B95A8; --border: #2E3A4E; --border-light: #252F40;
+      --blue-light: #1E2D4A; --coral-light: #2D1F1E;
+      --amber-light: #2D261A; --green-light: #1A2D1E;
+      --shadow: 0 1px 3px rgba(0,0,0,.2); --shadow-lg: 0 4px 12px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --surface: #111827; --card: #1E2736; --text: #E8ECF3;
+    --text-secondary: #8B95A8; --border: #2E3A4E; --border-light: #252F40;
+    --blue-light: #1E2D4A; --coral-light: #2D1F1E;
+    --amber-light: #2D261A; --green-light: #1A2D1E;
+    --shadow: 0 1px 3px rgba(0,0,0,.2); --shadow-lg: 0 4px 12px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"] {
+    --surface: #F5F6FA; --card: #FFFFFF; --text: #1B2640;
+    --text-secondary: #5E6A81; --border: #D8DCE6; --border-light: #ECEEF3;
+    --blue-light: #EBF0FF; --coral-light: #FFF0EF;
+    --amber-light: #FFF6E5; --green-light: #EDFDF2;
+    --shadow: 0 1px 3px rgba(27,38,64,.06), 0 1px 2px rgba(27,38,64,.04);
+    --shadow-lg: 0 4px 12px rgba(27,38,64,.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--surface); color: var(--text);
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--blue); color: #fff;
+    padding: 14px 20px;
+    box-shadow: 0 2px 8px rgba(44,95,232,.25);
+  }
+  .header-title { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+  .header-sub { font-size: 12px; opacity: .8; margin-top: 2px; }
+
+  .progress-bar {
+    position: sticky; top: 54px; z-index: 99;
+    background: var(--card); border-bottom: 1px solid var(--border-light);
+    padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+  }
+  .progress-track { flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width .4s ease; }
+  .progress-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 16px 16px 120px; }
+
+  .section {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden;
+  }
+  .section-header {
+    padding: 16px 18px 12px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none;
+  }
+  .section-header:active { opacity: .7; }
+  .section-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--blue); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; flex: 1; }
+  .section-chevron { font-size: 18px; color: var(--text-secondary); transition: transform .25s; }
+  .section.collapsed .section-chevron { transform: rotate(-90deg); }
+  .section.collapsed .section-body { display: none; }
+  .section-body { padding: 6px 18px 18px; }
+
+  .field { margin-top: 16px; }
+  .field-label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--text-secondary); margin-bottom: 6px;
+  }
+  .field-hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+
+  input[type="text"], input[type="date"], input[type="time"], textarea, select {
+    width: 100%; padding: 12px 14px; font-size: 15px;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--card); color: var(--text);
+    font-family: inherit; outline: none; transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--blue); }
+  textarea { resize: vertical; min-height: 80px; }
+  select { cursor: pointer; }
+
+  /* ---- Autocomplete / searchable select ---- */
+  .search-select { position: relative; }
+  .search-select input {
+    padding-right: 36px;
+  }
+  .search-select-arrow {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; color: var(--text-secondary); pointer-events: none;
+  }
+  .search-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--card); border: 1.5px solid var(--blue);
+    border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    max-height: 220px; overflow-y: auto; z-index: 50;
+    box-shadow: var(--shadow-lg);
+  }
+  .search-dropdown.open { display: block; }
+  .search-option {
+    padding: 12px 14px; font-size: 14px; cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: background .1s;
+  }
+  .search-option:last-child { border-bottom: none; }
+  .search-option:hover, .search-option:active { background: var(--blue-light); }
+  .search-option .opt-main { font-weight: 500; }
+  .search-option .opt-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .search-option mark { background: var(--amber-light); color: var(--text); border-radius: 2px; }
+
+  /* ---- Auto datetime display ---- */
+  .auto-datetime {
+    display: flex; gap: 10px; align-items: center;
+    padding: 12px 14px; background: var(--blue-light);
+    border-radius: var(--radius-sm); font-size: 15px; font-weight: 500;
+    color: var(--blue);
+  }
+  .auto-datetime .dt-icon { font-size: 18px; }
+
+  /* ---- Pills ---- */
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    padding: 10px 16px; font-size: 14px; font-weight: 500;
+    border: 1.5px solid var(--border); border-radius: 50px;
+    background: var(--card); color: var(--text);
+    cursor: pointer; user-select: none; transition: all .15s; text-align: center;
+  }
+  .pill:active { transform: scale(.96); }
+  .pill.selected { border-color: var(--blue); background: var(--blue-light); color: var(--blue); font-weight: 600; }
+  .pill.selected-green { border-color: var(--green); background: var(--green-light); color: var(--green); font-weight: 600; }
+  .pill.selected-coral { border-color: var(--coral); background: var(--coral-light); color: var(--coral); font-weight: 600; }
+  .pill.selected-amber { border-color: var(--amber); background: var(--amber-light); color: var(--amber); font-weight: 600; }
+
+  /* ---- Scale 1-5 ---- */
+  .scale { display: flex; gap: 8px; }
+  .scale-btn {
+    flex: 1; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--card); color: var(--text);
+    cursor: pointer; user-select: none; transition: all .15s;
+  }
+  .scale-btn:active { transform: scale(.94); }
+  .scale-btn.selected.s1 { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
+  .scale-btn.selected.s2 { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
+  .scale-btn.selected.s3 { border-color: var(--amber); background: var(--amber-light); color: var(--amber); }
+  .scale-btn.selected.s4 { border-color: var(--green); background: var(--green-light); color: var(--green); }
+  .scale-btn.selected.s5 { border-color: var(--green); background: var(--green-light); color: var(--green); }
+  .scale-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .scale-labels span { font-size: 10px; color: var(--text-secondary); }
+
+  .check-item { padding: 14px 0; border-bottom: 1px solid var(--border-light); }
+  .check-item:last-child { border-bottom: none; }
+  .check-item-header {
+    display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; cursor: pointer;
+  }
+  .check-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--border-light); color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; transition: all .2s;
+  }
+  .check-num.filled { background: var(--green); color: #fff; }
+  .check-title { font-size: 15px; font-weight: 600; flex: 1; }
+  .check-info-toggle {
+    font-size: 18px; color: var(--blue); cursor: pointer;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; flex-shrink: 0;
+  }
+  .check-info-toggle:hover { background: var(--blue-light); }
+  .check-hint {
+    display: none; font-size: 13px; color: var(--text-secondary);
+    background: var(--surface); padding: 10px 12px; border-radius: var(--radius-sm);
+    margin-bottom: 10px; line-height: 1.5; white-space: pre-line;
+  }
+  .check-hint.visible { display: block; }
+
+  .subsection {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--blue);
+    padding: 14px 0 4px; margin-top: 4px;
+  }
+
+  /* ---- Photo upload ---- */
+  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .photo-slot {
+    aspect-ratio: 1; border: 2px dashed var(--border);
+    border-radius: var(--radius-sm); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    cursor: pointer; position: relative; overflow: hidden; transition: border-color .2s;
+  }
+  .photo-slot:hover { border-color: var(--blue); }
+  .photo-slot .icon { font-size: 24px; color: var(--text-secondary); }
+  .photo-slot .label { font-size: 10px; color: var(--text-secondary); text-align: center; padding: 0 4px; }
+  .photo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .photo-slot .remove-photo {
+    position: absolute; top: 4px; right: 4px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(0,0,0,.6); color: #fff;
+    display: none; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer; z-index: 2;
+  }
+  .photo-slot.has-photo .remove-photo { display: flex; }
+  .photo-slot.has-photo .icon, .photo-slot.has-photo .label { display: none; }
+  .photo-slot input[type="file"] { display: none; }
+
+  /* Single photo upload (for status / act) */
+  .photo-single {
+    border: 2px dashed var(--border); border-radius: var(--radius-sm);
+    padding: 20px; display: flex; flex-direction: column; align-items: center;
+    gap: 6px; cursor: pointer; position: relative; overflow: hidden;
+    transition: border-color .2s; min-height: 100px;
+  }
+  .photo-single:hover { border-color: var(--blue); }
+  .photo-single .icon { font-size: 28px; color: var(--text-secondary); }
+  .photo-single .label { font-size: 13px; color: var(--text-secondary); }
+  .photo-single img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+  .photo-single .remove-photo {
+    position: absolute; top: 8px; right: 8px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,0,0,.6); color: #fff;
+    display: none; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; z-index: 2;
+  }
+  .photo-single.has-photo .remove-photo { display: flex; }
+  .photo-single.has-photo .icon, .photo-single.has-photo .label { display: none; }
+  .photo-single input[type="file"] { display: none; }
+
+  /* ---- Submit ---- */
+  .submit-area {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid var(--border-light);
+    padding: 12px 16px; z-index: 100;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .submit-btn {
+    display: block; width: 100%; max-width: 480px; margin: 0 auto;
+    padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--blue); color: #fff; border: none;
+    border-radius: var(--radius); cursor: pointer; transition: opacity .15s;
+  }
+  .submit-btn:active { opacity: .8; }
+  .submit-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--card);
+    padding: 12px 24px; border-radius: 50px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: var(--shadow-lg); z-index: 200;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  .toast.visible { opacity: 1; }
+
+  .success-screen {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 80vh; text-align: center; padding: 40px 20px;
+  }
+  .success-screen.visible { display: flex; }
+  .success-icon { font-size: 64px; margin-bottom: 16px; }
+  .success-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .success-sub { font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; }
+  .success-btn {
+    padding: 14px 32px; font-size: 15px; font-weight: 600;
+    background: var(--blue); color: #fff; border: none;
+    border-radius: 50px; cursor: pointer;
+  }
+
+  /* Status photo section - shown/hidden */
+  .status-photo-area { display: none; margin-top: 14px; }
+  .status-photo-area.visible { display: block; }
+
+  @media (min-width: 520px) {
+    .container { padding: 24px 24px 120px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Аудит точки</div>
+  <div class="header-sub">Магнат Бар / КДО — Сезон 2026</div>
+</div>
+
+<div class="progress-bar">
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="progress-label" id="progressLabel">0 / 15</div>
+</div>
+
+<div class="container" id="formContainer">
+
+  <!-- Section 1: Point selection -->
+  <div class="section" data-section="1">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">1</div>
+      <div class="section-title">Выбор точки</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <div class="field-label">Тип точки</div>
+        <div class="pills" data-field="point_type">
+          <div class="pill" onclick="selectPill(this); filterPoints()">МБ</div>
+          <div class="pill" onclick="selectPill(this); filterPoints()">КДО</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Точка</div>
+        <div class="search-select" id="pointSearch">
+          <input type="text" id="pointInput" placeholder="Начните вводить город или адрес..." autocomplete="off" onfocus="openPointDropdown()" oninput="filterPoints()">
+          <div class="search-select-arrow">&#9662;</div>
+          <div class="search-dropdown" id="pointDropdown"></div>
+        </div>
+        <div class="field-hint">Выберите точку из списка</div>
+      </div>
+      <!-- Auto-filled after selection -->
+      <div id="selectedPointInfo" style="display:none">
+        <div class="field">
+          <div class="field-label">Регион</div>
+          <div class="auto-datetime" id="selRegion" style="background:var(--surface);color:var(--text)"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Город</div>
+          <div class="auto-datetime" id="selCity" style="background:var(--surface);color:var(--text)"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Локация</div>
+          <div class="auto-datetime" id="selLocation" style="background:var(--surface);color:var(--text)"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Адрес</div>
+          <div class="auto-datetime" id="selAddress" style="background:var(--surface);color:var(--text)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Audit info -->
+  <div class="section" data-section="2">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">2</div>
+      <div class="section-title">Данные проверки</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <div class="field-label">Дата и время проверки</div>
+        <div class="auto-datetime" id="autoDatetime">
+          <span class="dt-icon">&#128338;</span>
+          <span id="datetimeDisplay"></span>
+        </div>
+        <div class="field-hint">Устанавливается автоматически</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Волна</div>
+        <div class="pills" data-field="wave">
+          <div class="pill" onclick="selectPill(this)">1 волна</div>
+          <div class="pill" onclick="selectPill(this)">2 волна</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Аудитор</div>
+        <div class="search-select" id="auditorSearch">
+          <input type="text" id="auditorInput" placeholder="Начните вводить ФИО..." autocomplete="off" onfocus="openAuditorDropdown()" oninput="filterAuditors()">
+          <div class="search-select-arrow">&#9662;</div>
+          <div class="search-dropdown" id="auditorDropdown"></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Тип аудитора</div>
+        <div class="pills" data-field="auditor_type">
+          <div class="pill" onclick="selectPill(this)">Сотрудник</div>
+          <div class="pill" onclick="selectPill(this)">Агентство</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Статус точки</div>
+        <div class="pills" data-field="point_status" id="statusPills">
+          <div class="pill" onclick="selectStatus(this, 'green')">Работает</div>
+          <div class="pill" onclick="selectStatus(this, 'amber')">Закрыта</div>
+          <div class="pill" onclick="selectStatus(this, 'coral')">Не найдена</div>
+          <div class="pill" onclick="selectStatus(this, 'amber')">Временно не работает</div>
+        </div>
+        <div class="field-hint">Если точка не работает — можно не заполнять чек-лист</div>
+      </div>
+      <!-- Photo for status (shown when not "Работает") -->
+      <div class="status-photo-area" id="statusPhotoArea">
+        <div class="field-label">Фото подтверждения статуса</div>
+        <div class="photo-single" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div>
+          <div class="label">Сфотографируйте точку</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+        <div class="field-hint">Подтвердите статус фотографией</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Checklist -->
+  <div class="section" data-section="3">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">3</div>
+      <div class="section-title">Чек-лист</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+
+      <div class="subsection">Внешний вид точки и чехлы</div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn1">1</div>
+          <div class="check-title">Чехлы</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Проверяем: чистоту, внешний вид и износ.
+&#8226; новые: чистые, без дефектов
+&#8226; старые: есть грязь или потёртости
+&#8226; нет: отсутствуют
+&#9888; Если хочется протереть — это «старые»</div>
+        <div class="pills" data-field="q1" data-check="1">
+          <div class="pill" onclick="selectCheck(this,'green')">Новые</div>
+          <div class="pill" onclick="selectCheck(this,'amber')">Старые</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Нет</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn2">2</div>
+          <div class="check-title">Состояние конструкции</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Проверяем: корпус, стойку, подсветку и электрику.
+&#8226; OK: всё целое и работает
+&#8226; Повреждение: сколы, трещины или не работает свет
+&#9888; Любой дефект сразу снижает оценку блока</div>
+        <div class="pills" data-field="q2" data-check="2">
+          <div class="pill" onclick="selectCheck(this,'green')">OK</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Повреждение</div>
+        </div>
+      </div>
+
+      <div class="subsection">Расходники и продукт</div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn3">3</div>
+          <div class="check-title">Декор</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Проверяем: наличие декора (5 видов).
+&#8226; OK: всё на месте
+&#8226; Нехватка: часть позиций отсутствует
+&#8226; Критично: работа невозможна</div>
+        <div class="pills" data-field="q3" data-check="3">
+          <div class="pill" onclick="selectCheck(this,'green')">OK</div>
+          <div class="pill" onclick="selectCheck(this,'amber')">Нехватка</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Критично</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn4">4</div>
+          <div class="check-title">Актуальность декора</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Соответствует ли декор текущей кампании?
+&#9888; Если есть сомнения — считаем старым</div>
+        <div class="pills" data-field="q4" data-check="4">
+          <div class="pill" onclick="selectCheck(this,'green')">Новый</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Старый</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn5">5</div>
+          <div class="check-title">Срок годности</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Даты на материалах.
+&#8226; OK: в пределах срока
+&#9888; Просрочка — критическая ошибка</div>
+        <div class="pills" data-field="q5" data-check="5">
+          <div class="pill" onclick="selectCheck(this,'green')">OK</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Просрочен</div>
+        </div>
+        <div class="field" id="expDateField" style="display:none">
+          <div class="field-label">Дата на материале</div>
+          <input type="date" id="exp_date">
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn6">6</div>
+          <div class="check-title">Визуальный вид декора</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Чистота, целостность и аккуратность размещения.
+&#8226; OK: чисто, ровно
+&#8226; Плохо: грязно, порвано или висит криво</div>
+        <div class="pills" data-field="q6" data-check="6">
+          <div class="pill" onclick="selectCheck(this,'green')">OK</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Плохо</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn7">7</div>
+          <div class="check-title">Шоколад</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Есть ли шоколад в работе прямо сейчас?</div>
+        <div class="pills" data-field="q7" data-check="7">
+          <div class="pill" onclick="selectCheck(this,'green')">Да</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Нет</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn8">8</div>
+          <div class="check-title">Мороженое</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Есть ли продукт в продаже на точке?</div>
+        <div class="pills" data-field="q8" data-check="8">
+          <div class="pill" onclick="selectCheck(this,'green')">Да</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Нет</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn9">9</div>
+          <div class="check-title">Другие расходники</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Ложки, стаканы, упаковка и др.
+&#8226; OK: всё есть
+&#8226; Нехватка: часть отсутствует
+&#8226; Критично: работа невозможна</div>
+        <div class="pills" data-field="q9" data-check="9">
+          <div class="pill" onclick="selectCheck(this,'green')">OK</div>
+          <div class="pill" onclick="selectCheck(this,'amber')">Нехватка</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Критично</div>
+        </div>
+      </div>
+
+      <div class="subsection">Мерч и выкладка</div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn10">10</div>
+          <div class="check-title">Треи</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Чистота и целостность подставок.
+&#8226; OK: чистые
+&#8226; Грязные: видимые загрязнения
+&#8226; Сломаны: повреждены</div>
+        <div class="pills" data-field="q10" data-check="10">
+          <div class="pill" onclick="selectCheck(this,'green')">OK</div>
+          <div class="pill" onclick="selectCheck(this,'amber')">Грязные</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Сломаны</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn11">11</div>
+          <div class="check-title">Чистота точки</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Бар, рабочая зона, мусор.
+5 — идеально | 4 — мелкие недочёты | 3 — заметная грязь | 2 — грязно | 1 — антисанитария
+&#9888; Если грязь заметит клиент — 3 или ниже</div>
+        <div class="scale" data-field="q11" data-check="11">
+          <div class="scale-btn s1" onclick="selectScale(this)">1</div>
+          <div class="scale-btn s2" onclick="selectScale(this)">2</div>
+          <div class="scale-btn s3" onclick="selectScale(this)">3</div>
+          <div class="scale-btn s4" onclick="selectScale(this)">4</div>
+          <div class="scale-btn s5" onclick="selectScale(this)">5</div>
+        </div>
+        <div class="scale-labels"><span>Плохо</span><span>Отлично</span></div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn12">12</div>
+          <div class="check-title">Соответствие брендбуку</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Оформление, расположение элементов и общий вид.
+5 — полностью | 4 — мелкие отклонения | 3 — частично | 2 — сильно нарушено | 1 — не соответствует</div>
+        <div class="scale" data-field="q12" data-check="12">
+          <div class="scale-btn s1" onclick="selectScale(this)">1</div>
+          <div class="scale-btn s2" onclick="selectScale(this)">2</div>
+          <div class="scale-btn s3" onclick="selectScale(this)">3</div>
+          <div class="scale-btn s4" onclick="selectScale(this)">4</div>
+          <div class="scale-btn s5" onclick="selectScale(this)">5</div>
+        </div>
+        <div class="scale-labels"><span>Плохо</span><span>Отлично</span></div>
+      </div>
+
+      <div class="subsection">Персонал</div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn13">13</div>
+          <div class="check-title">Наличие персонала</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Есть ли сотрудник на месте?
+&#9888; Если нет — это критическая проблема</div>
+        <div class="pills" data-field="q13" data-check="13">
+          <div class="pill" onclick="selectCheck(this,'green')">Да</div>
+          <div class="pill" onclick="selectCheck(this,'coral')">Нет</div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn14">14</div>
+          <div class="check-title">Внешний вид персонала</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Футболка, фартук, головной убор, чистая форма, перчатки.
+5 — всё ОК | 4 — 1 нарушение | 3 — 2-3 | 2 — много | 1 — полное несоответствие</div>
+        <div class="scale" data-field="q14" data-check="14">
+          <div class="scale-btn s1" onclick="selectScale(this)">1</div>
+          <div class="scale-btn s2" onclick="selectScale(this)">2</div>
+          <div class="scale-btn s3" onclick="selectScale(this)">3</div>
+          <div class="scale-btn s4" onclick="selectScale(this)">4</div>
+          <div class="scale-btn s5" onclick="selectScale(this)">5</div>
+        </div>
+        <div class="scale-labels"><span>Плохо</span><span>Отлично</span></div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-item-header">
+          <div class="check-num" id="cn15">15</div>
+          <div class="check-title">Знание продукта</div>
+          <div class="check-info-toggle" onclick="toggleHint(this)">&#9432;</div>
+        </div>
+        <div class="check-hint">Может ли рассказать о составе и способе приготовления?
+5 — свободно | 4 — неуверенно | 3 — частично | 2 — почти нет | 1 — не знает
+&#9888; Не ответил на простой вопрос — 2 или ниже</div>
+        <div class="scale" data-field="q15" data-check="15">
+          <div class="scale-btn s1" onclick="selectScale(this)">1</div>
+          <div class="scale-btn s2" onclick="selectScale(this)">2</div>
+          <div class="scale-btn s3" onclick="selectScale(this)">3</div>
+          <div class="scale-btn s4" onclick="selectScale(this)">4</div>
+          <div class="scale-btn s5" onclick="selectScale(this)">5</div>
+        </div>
+        <div class="scale-labels"><span>Плохо</span><span>Отлично</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Section 4: Problems -->
+  <div class="section" data-section="4">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">4</div>
+      <div class="section-title">Проблемы и действия</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+      <div class="field-hint" style="margin-bottom:12px">Заполняется, если есть нарушения</div>
+      <div class="field">
+        <div class="field-label">Критичность</div>
+        <div class="pills" data-field="severity">
+          <div class="pill" onclick="selectPillStatus(this,'green')">Низкая</div>
+          <div class="pill" onclick="selectPillStatus(this,'amber')">Средняя</div>
+          <div class="pill" onclick="selectPillStatus(this,'coral')">Критическая</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Суть проблемы</div>
+        <textarea id="problem_desc" placeholder="Кратко и по факту: что именно не так"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Что нужно сделать</div>
+        <textarea id="problem_action" placeholder="Начинайте с глагола: заменить, протереть, провести..."></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Кто исправит и когда</div>
+        <input type="text" id="problem_who" placeholder="ФИО ответственного и срок">
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Photos -->
+  <div class="section" data-section="5">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">5</div>
+      <div class="section-title">Фото</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+      <div class="field-hint" style="margin-bottom:14px">Общий план, декор, чехлы, персонал (с согласия), поломки</div>
+      <div class="photo-grid">
+        <div class="photo-slot" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div><div class="label">Общий план</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+        <div class="photo-slot" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div><div class="label">Декор / чехлы</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+        <div class="photo-slot" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div><div class="label">Персонал</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+        <div class="photo-slot" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div><div class="label">Проблема 1</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+        <div class="photo-slot" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div><div class="label">Проблема 2</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+        <div class="photo-slot" onclick="this.querySelector('input').click()">
+          <div class="icon">&#128247;</div><div class="label">Ещё фото</div>
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+          <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Comment -->
+  <div class="section" data-section="6">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">6</div>
+      <div class="section-title">Комментарий аудитора</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+      <textarea id="auditor_comment" placeholder="Свободный комментарий по итогам проверки" style="min-height:100px"></textarea>
+    </div>
+  </div>
+
+  <!-- Section 7: Act photo -->
+  <div class="section" data-section="7">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-num">7</div>
+      <div class="section-title">Фото акта с подписью продавца</div>
+      <div class="section-chevron">&#9662;</div>
+    </div>
+    <div class="section-body">
+      <div class="field-hint" style="margin-bottom:12px">Аудитор обязан ознакомить Продавца с результатами проверки и сфотографировать подписанный акт</div>
+      <div class="photo-single" onclick="this.querySelector('input').click()">
+        <div class="icon">&#128221;</div>
+        <div class="label">Сфотографируйте подписанный акт</div>
+        <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+        <div class="remove-photo" onclick="removePhoto(event, this)">&times;</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Success screen -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">&#10004;&#65039;</div>
+  <div class="success-title">Аудит отправлен</div>
+  <div class="success-sub">Данные сохранены. Можно начать новый аудит.</div>
+  <button class="success-btn" onclick="resetForm()">Новый аудит</button>
+</div>
+
+<!-- Submit -->
+<div class="submit-area" id="submitArea">
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">Отправить аудит</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  // DATA: Points and auditors (will come from database in production)
+  // ============================================================
+  const POINTS = [
+    { id: 1, type: 'МБ', region: 'Московская область', city: 'Москва', location: 'ТЦ Авиапарк, 1 этаж', address: 'Ходынский бульвар, 4' },
+    { id: 2, type: 'МБ', region: 'Московская область', city: 'Москва', location: 'Парк Горького, центральная аллея', address: 'ул. Крымский Вал, 9' },
+    { id: 3, type: 'КДО', region: 'Московская область', city: 'Москва', location: 'ТЦ Мега Тёплый Стан', address: 'Калужское шоссе, 21 км' },
+    { id: 4, type: 'МБ', region: 'Ленинградская область', city: 'Санкт-Петербург', location: 'Невский проспект, у метро', address: 'Невский проспект, 114' },
+    { id: 5, type: 'КДО', region: 'Ленинградская область', city: 'Санкт-Петербург', location: 'ТЦ Галерея, 2 этаж', address: 'Лиговский проспект, 30А' },
+    { id: 6, type: 'МБ', region: 'Новосибирская область', city: 'Новосибирск', location: 'ТЦ Аура, 1 этаж', address: 'ул. Военная, 5' },
+    { id: 7, type: 'КДО', region: 'Свердловская область', city: 'Екатеринбург', location: 'ТЦ Гринвич, фудкорт', address: 'ул. 8 Марта, 46' },
+    { id: 8, type: 'МБ', region: 'Краснодарский край', city: 'Краснодар', location: 'ТЦ Красная площадь', address: 'ул. Дзержинского, 100' },
+    { id: 9, type: 'КДО', region: 'Республика Татарстан', city: 'Казань', location: 'ТЦ Мега, 1 этаж', address: 'Проспект Победы, 141' },
+    { id: 10, type: 'МБ', region: 'Нижегородская область', city: 'Нижний Новгород', location: 'ТЦ Небо, фудкорт', address: 'ул. Большая Покровская, 82' },
+    { id: 11, type: 'МБ', region: 'Самарская область', city: 'Самара', location: 'ТЦ Космопорт', address: 'ул. Дыбенко, 30' },
+    { id: 12, type: 'КДО', region: 'Ростовская область', city: 'Ростов-на-Дону', location: 'ТЦ Горизонт, 1 этаж', address: 'проспект Нагибина, 32/2' },
+  ];
+
+  const AUDITORS = [
+    { name: 'Иванова Мария Сергеевна', type: 'Агентство' },
+    { name: 'Петров Дмитрий Александрович', type: 'Сотрудник' },
+    { name: 'Сидорова Анна Викторовна', type: 'Агентство' },
+    { name: 'Козлов Артём Игоревич', type: 'Сотрудник' },
+    { name: 'Новикова Елена Павловна', type: 'Агентство' },
+    { name: 'Морозов Кирилл Дмитриевич', type: 'Агентство' },
+    { name: 'Волкова Дарья Олеговна', type: 'Сотрудник' },
+    { name: 'Алексеев Максим Андреевич', type: 'Агентство' },
+  ];
+
+  let selectedPoint = null;
+  let selectedAuditor = null;
+
+  // ============================================================
+  // Auto date/time
+  // ============================================================
+  function updateDatetime() {
+    const now = new Date();
+    const d = now.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+    const t = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('datetimeDisplay').textContent = d + ', ' + t;
+  }
+  updateDatetime();
+  setInterval(updateDatetime, 30000);
+
+  // ============================================================
+  // Point search
+  // ============================================================
+  function getSelectedType() {
+    const pill = document.querySelector('[data-field="point_type"] .selected');
+    return pill ? pill.textContent.trim() : null;
+  }
+
+  function openPointDropdown() {
+    filterPoints();
+    document.getElementById('pointDropdown').classList.add('open');
+  }
+
+  function filterPoints() {
+    const query = document.getElementById('pointInput').value.toLowerCase().trim();
+    const type = getSelectedType();
+    const dd = document.getElementById('pointDropdown');
+
+    let filtered = POINTS;
+    if (type) filtered = filtered.filter(p => p.type === type);
+    if (query) {
+      filtered = filtered.filter(p =>
+        p.city.toLowerCase().includes(query) ||
+        p.address.toLowerCase().includes(query) ||
+        p.location.toLowerCase().includes(query) ||
+        p.region.toLowerCase().includes(query)
+      );
+    }
+
+    dd.innerHTML = filtered.length === 0
+      ? '<div class="search-option" style="color:var(--text-secondary)">Ничего не найдено</div>'
+      : filtered.map(p => `
+        <div class="search-option" onclick="selectPoint(${p.id})">
+          <div class="opt-main">${highlightMatch(p.city + ' — ' + p.location, query)}</div>
+          <div class="opt-sub">${highlightMatch(p.address, query)} &middot; ${p.type}</div>
+        </div>
+      `).join('');
+    dd.classList.add('open');
+  }
+
+  function highlightMatch(text, query) {
+    if (!query) return text;
+    const idx = text.toLowerCase().indexOf(query);
+    if (idx === -1) return text;
+    return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
+  }
+
+  function selectPoint(id) {
+    const p = POINTS.find(x => x.id === id);
+    if (!p) return;
+    selectedPoint = p;
+    document.getElementById('pointInput').value = p.city + ' — ' + p.location;
+    document.getElementById('pointDropdown').classList.remove('open');
+    document.getElementById('selectedPointInfo').style.display = 'block';
+    document.getElementById('selRegion').textContent = p.region;
+    document.getElementById('selCity').textContent = p.city;
+    document.getElementById('selLocation').textContent = p.location;
+    document.getElementById('selAddress').textContent = p.address;
+
+    // Auto-select type pill
+    const typePills = document.querySelectorAll('[data-field="point_type"] .pill');
+    typePills.forEach(pill => {
+      pill.classList.remove('selected');
+      if (pill.textContent.trim() === p.type) pill.classList.add('selected');
+    });
+  }
+
+  // ============================================================
+  // Auditor search
+  // ============================================================
+  function openAuditorDropdown() {
+    filterAuditors();
+    document.getElementById('auditorDropdown').classList.add('open');
+  }
+
+  function filterAuditors() {
+    const query = document.getElementById('auditorInput').value.toLowerCase().trim();
+    const dd = document.getElementById('auditorDropdown');
+
+    let filtered = AUDITORS;
+    if (query) filtered = filtered.filter(a => a.name.toLowerCase().includes(query));
+
+    dd.innerHTML = filtered.length === 0
+      ? '<div class="search-option" style="color:var(--text-secondary)">Никого не найдено</div>'
+      : filtered.map((a, i) => `
+        <div class="search-option" onclick="selectAuditor(${i})">
+          <div class="opt-main">${highlightMatch(a.name, query)}</div>
+          <div class="opt-sub">${a.type}</div>
+        </div>
+      `).join('');
+    dd.classList.add('open');
+  }
+
+  function selectAuditor(idx) {
+    const a = AUDITORS[idx];
+    if (!a) return;
+    selectedAuditor = a;
+    document.getElementById('auditorInput').value = a.name;
+    document.getElementById('auditorDropdown').classList.remove('open');
+
+    // Auto-select type pill
+    const typePills = document.querySelectorAll('[data-field="auditor_type"] .pill');
+    typePills.forEach(pill => {
+      pill.classList.remove('selected');
+      if (pill.textContent.trim() === a.type) pill.classList.add('selected');
+    });
+  }
+
+  // Close dropdowns on outside click
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#pointSearch')) {
+      document.getElementById('pointDropdown').classList.remove('open');
+    }
+    if (!e.target.closest('#auditorSearch')) {
+      document.getElementById('auditorDropdown').classList.remove('open');
+    }
+  });
+
+  // ============================================================
+  // Status with photo
+  // ============================================================
+  function selectStatus(el, color) {
+    const container = el.closest('.pills');
+    container.querySelectorAll('.pill').forEach(p => {
+      p.classList.remove('selected','selected-green','selected-coral','selected-amber');
+    });
+    el.classList.add('selected-' + color);
+
+    const status = el.textContent.trim();
+    const photoArea = document.getElementById('statusPhotoArea');
+    if (status !== 'Работает') {
+      photoArea.classList.add('visible');
+    } else {
+      photoArea.classList.remove('visible');
+    }
+    updateProgress();
+  }
+
+  // ============================================================
+  // Section toggle, pills, scales, hints, photos
+  // ============================================================
+  function toggleSection(header) {
+    header.closest('.section').classList.toggle('collapsed');
+  }
+
+  function selectPill(el) {
+    el.closest('.pills').querySelectorAll('.pill').forEach(p => {
+      p.classList.remove('selected','selected-green','selected-coral','selected-amber');
+    });
+    el.classList.add('selected');
+    updateProgress();
+  }
+
+  function selectPillStatus(el, color) {
+    el.closest('.pills').querySelectorAll('.pill').forEach(p => {
+      p.classList.remove('selected','selected-green','selected-coral','selected-amber');
+    });
+    el.classList.add('selected-' + color);
+    updateProgress();
+  }
+
+  function selectCheck(el, color) {
+    const container = el.closest('.pills');
+    container.querySelectorAll('.pill').forEach(p => {
+      p.classList.remove('selected','selected-green','selected-coral','selected-amber');
+    });
+    el.classList.add('selected-' + color);
+    const checkNum = container.dataset.check;
+    const cn = document.getElementById('cn' + checkNum);
+    if (cn) cn.classList.add('filled');
+    if (container.dataset.field === 'q5') {
+      const expField = document.getElementById('expDateField');
+      if (expField) expField.style.display = el.textContent.trim() === 'Просрочен' ? 'block' : 'none';
+    }
+    updateProgress();
+  }
+
+  function selectScale(el) {
+    const container = el.closest('.scale');
+    container.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    const checkNum = container.dataset.check;
+    const cn = document.getElementById('cn' + checkNum);
+    if (cn) cn.classList.add('filled');
+    updateProgress();
+  }
+
+  function toggleHint(toggle) {
+    toggle.closest('.check-item').querySelector('.check-hint').classList.toggle('visible');
+  }
+
+  function handlePhoto(input) {
+    const slot = input.closest('.photo-slot, .photo-single');
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      let img = slot.querySelector('img');
+      if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+      img.src = e.target.result;
+      slot.classList.add('has-photo');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removePhoto(event, btn) {
+    event.stopPropagation();
+    const slot = btn.closest('.photo-slot, .photo-single');
+    const img = slot.querySelector('img');
+    if (img) img.remove();
+    slot.classList.remove('has-photo');
+    slot.querySelector('input').value = '';
+  }
+
+  // ============================================================
+  // Progress
+  // ============================================================
+  function updateProgress() {
+    let filled = 0;
+    for (let i = 1; i <= 15; i++) {
+      const cn = document.getElementById('cn' + i);
+      if (cn && cn.classList.contains('filled')) filled++;
+    }
+    const pct = Math.round((filled / 15) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = filled + ' / 15';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 2500);
+  }
+
+  // ============================================================
+  // Submit
+  // ============================================================
+  function submitForm() {
+    if (!selectedPoint) { showToast('Выберите точку из списка'); return; }
+    if (!selectedAuditor && !document.getElementById('auditorInput').value.trim()) {
+      showToast('Выберите аудитора'); return;
+    }
+    let filled = 0;
+    for (let i = 1; i <= 15; i++) {
+      const cn = document.getElementById('cn' + i);
+      if (cn && cn.classList.contains('filled')) filled++;
+    }
+    // If point not working, checklist is optional
+    const statusPill = document.querySelector('[data-field="point_status"] .selected-green, [data-field="point_status"] .selected-amber, [data-field="point_status"] .selected-coral');
+    const status = statusPill ? statusPill.textContent.trim() : '';
+    if (status === 'Работает' && filled < 15) {
+      showToast('Заполните все 15 пунктов чек-листа');
+      return;
+    }
+
+    const data = {
+      timestamp: new Date().toISOString(),
+      point: selectedPoint,
+      auditor: selectedAuditor ? selectedAuditor.name : document.getElementById('auditorInput').value.trim(),
+      comment: document.getElementById('auditor_comment')?.value,
+    };
+    document.querySelectorAll('[data-field]').forEach(container => {
+      const selected = container.querySelector('.selected, .selected-green, .selected-coral, .selected-amber');
+      if (selected) data[container.dataset.field] = selected.textContent.trim();
+    });
+
+    const audits = JSON.parse(localStorage.getItem('audits') || '[]');
+    audits.push(data);
+    localStorage.setItem('audits', JSON.stringify(audits));
+
+    document.getElementById('formContainer').style.display = 'none';
+    document.getElementById('submitArea').style.display = 'none';
+    document.getElementById('successScreen').classList.add('visible');
+    document.querySelector('.progress-bar').style.display = 'none';
+  }
+
+  function resetForm() { location.reload(); }
+</script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Дашборд аудитов — Магнат Бар / КДО</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --blue: #2C5FE8; --blue-light: #EBF0FF; --blue-muted: #96AEEF;
+    --coral: #E8554A; --coral-light: #FFF0EF;
+    --amber: #E89C2C; --amber-light: #FFF6E5;
+    --green: #2BA84A; --green-light: #EDFDF2;
+    --surface: #F5F6FA; --card: #FFFFFF; --text: #1B2640;
+    --text-secondary: #5E6A81; --border: #D8DCE6; --border-light: #ECEEF3;
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(27,38,64,.06), 0 1px 2px rgba(27,38,64,.04);
+    --shadow-lg: 0 4px 12px rgba(27,38,64,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #111827; --card: #1E2736; --text: #E8ECF3;
+      --text-secondary: #8B95A8; --border: #2E3A4E; --border-light: #252F40;
+      --blue-light: #1E2D4A; --coral-light: #2D1F1E;
+      --amber-light: #2D261A; --green-light: #1A2D1E;
+      --shadow: 0 1px 3px rgba(0,0,0,.2); --shadow-lg: 0 4px 12px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --surface: #111827; --card: #1E2736; --text: #E8ECF3;
+    --text-secondary: #8B95A8; --border: #2E3A4E; --border-light: #252F40;
+    --blue-light: #1E2D4A; --coral-light: #2D1F1E;
+    --amber-light: #2D261A; --green-light: #1A2D1E;
+    --shadow: 0 1px 3px rgba(0,0,0,.2); --shadow-lg: 0 4px 12px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"] {
+    --surface: #F5F6FA; --card: #FFFFFF; --text: #1B2640;
+    --text-secondary: #5E6A81; --border: #D8DCE6; --border-light: #ECEEF3;
+    --blue-light: #EBF0FF; --coral-light: #FFF0EF;
+    --amber-light: #FFF6E5; --green-light: #EDFDF2;
+    --shadow: 0 1px 3px rgba(27,38,64,.06), 0 1px 2px rgba(27,38,64,.04);
+    --shadow-lg: 0 4px 12px rgba(27,38,64,.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--surface); color: var(--text);
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: var(--blue); color: #fff;
+    padding: 18px 24px;
+    box-shadow: 0 2px 8px rgba(44,95,232,.25);
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; max-width: 1100px; margin: 0 auto; }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .header-sub { font-size: 12px; opacity: .8; margin-top: 2px; }
+  .header-actions { display: flex; gap: 10px; }
+  .header-btn {
+    padding: 8px 16px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid rgba(255,255,255,.4); border-radius: 50px;
+    background: rgba(255,255,255,.15); color: #fff;
+    cursor: pointer; transition: all .15s; text-decoration: none;
+  }
+  .header-btn:hover { background: rgba(255,255,255,.25); border-color: rgba(255,255,255,.6); }
+  .header-btn.primary { background: #fff; color: var(--blue); border-color: #fff; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* ---- Stat cards ---- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); }
+  .stat-value { font-size: 28px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.coral { color: var(--coral); }
+  .stat-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* ---- Filters ---- */
+  .filters {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .filter-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
+  .filter-select {
+    padding: 8px 12px; font-size: 13px;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--card); color: var(--text);
+    font-family: inherit; outline: none; cursor: pointer;
+  }
+  .filter-select:focus { border-color: var(--blue); }
+  .filter-spacer { flex: 1; }
+
+  /* ---- Table ---- */
+  .table-wrap {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  thead th {
+    padding: 12px 14px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+    color: var(--text-secondary); background: var(--surface);
+    border-bottom: 2px solid var(--border-light);
+    text-align: left; white-space: nowrap; position: sticky; top: 0;
+  }
+  tbody td {
+    padding: 12px 14px; border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+  }
+  tbody tr:hover { background: var(--blue-light); }
+  tbody tr { cursor: pointer; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 50px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .badge.ok { background: var(--green-light); color: var(--green); }
+  .badge.warn { background: var(--amber-light); color: var(--amber); }
+  .badge.crit { background: var(--coral-light); color: var(--coral); }
+
+  .score-bar { display: flex; align-items: center; gap: 8px; }
+  .score-track { flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; min-width: 50px; }
+  .score-fill { height: 100%; border-radius: 3px; }
+  .score-num { font-weight: 700; font-size: 13px; min-width: 30px; }
+
+  /* ---- Detail modal ---- */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    z-index: 200; align-items: flex-start; justify-content: center;
+    padding: 40px 16px; overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); max-width: 600px; width: 100%;
+    padding: 24px; position: relative;
+  }
+  .modal-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--surface); border: none; color: var(--text);
+    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; padding-right: 40px; }
+  .modal-section { margin-top: 16px; }
+  .modal-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--blue); margin-bottom: 8px; }
+  .modal-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+  .modal-row-label { color: var(--text-secondary); }
+  .modal-row-value { font-weight: 600; text-align: right; }
+  .modal-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .modal-photo {
+    aspect-ratio: 1; border-radius: var(--radius-sm); background: var(--surface);
+    display: flex; align-items: center; justify-content: center; color: var(--text-secondary);
+    font-size: 12px; overflow: hidden;
+  }
+  .modal-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ---- Empty state ---- */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .empty-sub { font-size: 14px; color: var(--text-secondary); max-width: 400px; margin: 0 auto; }
+
+  /* ---- Export button in table header ---- */
+  .export-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--border-light);
+  }
+  .export-bar-title { font-size: 14px; font-weight: 700; }
+  .export-bar-count { font-size: 12px; color: var(--text-secondary); margin-left: 8px; }
+  .export-btn {
+    padding: 8px 16px; font-size: 13px; font-weight: 600;
+    background: var(--green); color: #fff; border: none;
+    border-radius: var(--radius-sm); cursor: pointer; transition: opacity .15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .export-btn:hover { opacity: .85; }
+  .export-btn svg { width: 16px; height: 16px; }
+
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--card);
+    padding: 12px 24px; border-radius: 50px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: var(--shadow-lg); z-index: 300;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  .toast.visible { opacity: 1; }
+
+  @media (max-width: 640px) {
+    .header-actions { flex-wrap: wrap; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .filters { flex-direction: column; align-items: stretch; }
+    .filter-spacer { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <div class="header-title">Дашборд аудитов</div>
+      <div class="header-sub">Магнат Бар / КДО — Сезон 2026</div>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn primary" onclick="exportToExcel()">
+        <span>&#128196;</span> Скачать Excel
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats" id="statsArea">
+    <div class="stat-card">
+      <div class="stat-label">Всего аудитов</div>
+      <div class="stat-value" id="statTotal">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Средний балл</div>
+      <div class="stat-value green" id="statAvg">—</div>
+      <div class="stat-sub" id="statAvgSub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Проблемных</div>
+      <div class="stat-value coral" id="statProblems">0</div>
+      <div class="stat-sub">оценка &lt; 70%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Без нарушений</div>
+      <div class="stat-value green" id="statClean">0</div>
+      <div class="stat-sub">оценка &ge; 90%</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-label">Фильтры:</div>
+    <select class="filter-select" id="filterCity" onchange="applyFilters()">
+      <option value="">Все города</option>
+    </select>
+    <select class="filter-select" id="filterWave" onchange="applyFilters()">
+      <option value="">Все волны</option>
+      <option value="1 волна">1 волна</option>
+      <option value="2 волна">2 волна</option>
+    </select>
+    <select class="filter-select" id="filterStatus" onchange="applyFilters()">
+      <option value="">Все статусы</option>
+      <option value="Работает">Работает</option>
+      <option value="Закрыта">Закрыта</option>
+      <option value="Не найдена">Не найдена</option>
+      <option value="Временно не работает">Временно не работает</option>
+    </select>
+    <select class="filter-select" id="filterAuditor" onchange="applyFilters()">
+      <option value="">Все аудиторы</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="export-bar">
+      <div>
+        <span class="export-bar-title">Результаты проверок</span>
+        <span class="export-bar-count" id="tableCount"></span>
+      </div>
+      <button class="export-btn" onclick="exportToExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+        Excel
+      </button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Город</th>
+            <th>Точка</th>
+            <th>Тип</th>
+            <th>Волна</th>
+            <th>Аудитор</th>
+            <th>Статус</th>
+            <th>Оценка</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">&#128203;</div>
+      <div class="empty-title">Пока нет аудитов</div>
+      <div class="empty-sub">Данные появятся здесь после первых проверок. В демо-режиме загружены тестовые данные.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  // DEMO DATA
+  // ============================================================
+  const DEMO_AUDITS = [
+    { id: 1, date: '2026-06-15', time: '10:30', city: 'Москва', location: 'ТЦ Авиапарк, 1 этаж', address: 'Ходынский бульвар, 4', type: 'МБ', wave: '1 волна', auditor: 'Иванова Мария Сергеевна', auditor_type: 'Агентство', status: 'Работает',
+      q1: 'Новые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 5, q12: 5, q13: 'Да', q14: 5, q15: 4, comment: 'Точка в отличном состоянии, продавец приветливый.', photos: 3 },
+    { id: 2, date: '2026-06-15', time: '14:15', city: 'Москва', location: 'Парк Горького', address: 'ул. Крымский Вал, 9', type: 'МБ', wave: '1 волна', auditor: 'Иванова Мария Сергеевна', auditor_type: 'Агентство', status: 'Работает',
+      q1: 'Старые', q2: 'OK', q3: 'Нехватка', q4: 'Новый', q5: 'OK', q6: 'Плохо', q7: 'Да', q8: 'Да', q9: 'Нехватка', q10: 'Грязные', q11: 3, q12: 3, q13: 'Да', q14: 3, q15: 3, comment: 'Чехлы грязные, декора не хватает, стаканчики заканчиваются.', severity: 'Средняя', problem: 'Грязные чехлы, нехватка декора и стаканов', photos: 5 },
+    { id: 3, date: '2026-06-16', time: '11:00', city: 'Санкт-Петербург', location: 'Невский проспект, у метро', address: 'Невский проспект, 114', type: 'МБ', wave: '1 волна', auditor: 'Петров Дмитрий Александрович', auditor_type: 'Сотрудник', status: 'Работает',
+      q1: 'Новые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 5, comment: 'Всё хорошо, мелкие недочеты по чистоте.', photos: 4 },
+    { id: 4, date: '2026-06-16', time: '15:30', city: 'Санкт-Петербург', location: 'ТЦ Галерея, 2 этаж', address: 'Лиговский проспект, 30А', type: 'КДО', wave: '1 волна', auditor: 'Петров Дмитрий Александрович', auditor_type: 'Сотрудник', status: 'Работает',
+      q1: 'Новые', q2: 'Повреждение', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Нет', q8: 'Да', q9: 'OK', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 3, comment: 'Повреждена подсветка на стойке. Шоколада нет в наличии.', severity: 'Средняя', problem: 'Не работает подсветка, отсутствует шоколад', photos: 4 },
+    { id: 5, date: '2026-06-17', time: '09:45', city: 'Новосибирск', location: 'ТЦ Аура, 1 этаж', address: 'ул. Военная, 5', type: 'МБ', wave: '1 волна', auditor: 'Сидорова Анна Викторовна', auditor_type: 'Агентство', status: 'Работает',
+      q1: 'Нет', q2: 'Повреждение', q3: 'Критично', q4: 'Старый', q5: 'Просрочен', q6: 'Плохо', q7: 'Нет', q8: 'Да', q9: 'Критично', q10: 'Сломаны', q11: 1, q12: 1, q13: 'Да', q14: 2, q15: 2, comment: 'Критическое состояние точки. Нет чехлов, конструкция повреждена, декор просрочен, нет шоколада, расходники закончились.', severity: 'Критическая', problem: 'Множественные нарушения, точка требует срочного вмешательства', photos: 6 },
+    { id: 6, date: '2026-06-17', time: '13:00', city: 'Екатеринбург', location: 'ТЦ Гринвич, фудкорт', address: 'ул. 8 Марта, 46', type: 'КДО', wave: '1 волна', auditor: 'Козлов Артём Игоревич', auditor_type: 'Сотрудник', status: 'Временно не работает',
+      q1: null, q2: null, q3: null, q4: null, q5: null, q6: null, q7: null, q8: null, q9: null, q10: null, q11: null, q12: null, q13: null, q14: null, q15: null, comment: 'Точка закрыта на ремонт фудкорта. Ориентировочно откроют через 2 недели.', photos: 2 },
+    { id: 7, date: '2026-06-18', time: '10:00', city: 'Краснодар', location: 'ТЦ Красная площадь', address: 'ул. Дзержинского, 100', type: 'МБ', wave: '1 волна', auditor: 'Новикова Елена Павловна', auditor_type: 'Агентство', status: 'Работает',
+      q1: 'Новые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 5, q12: 5, q13: 'Да', q14: 5, q15: 5, comment: 'Идеальная точка, лучшая из проверенных.', photos: 3 },
+    { id: 8, date: '2026-06-18', time: '14:30', city: 'Казань', location: 'ТЦ Мега, 1 этаж', address: 'Проспект Победы, 141', type: 'КДО', wave: '1 волна', auditor: 'Морозов Кирилл Дмитриевич', auditor_type: 'Агентство', status: 'Работает',
+      q1: 'Старые', q2: 'OK', q3: 'OK', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'OK', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 4, comment: 'Чехлы чуть потёртые, остальное в порядке.', photos: 3 },
+    { id: 9, date: '2026-07-01', time: '11:00', city: 'Москва', location: 'ТЦ Мега Тёплый Стан', address: 'Калужское шоссе, 21 км', type: 'КДО', wave: '2 волна', auditor: 'Иванова Мария Сергеевна', auditor_type: 'Агентство', status: 'Работает',
+      q1: 'Новые', q2: 'OK', q3: 'Нехватка', q4: 'Новый', q5: 'OK', q6: 'OK', q7: 'Да', q8: 'Да', q9: 'Нехватка', q10: 'OK', q11: 4, q12: 4, q13: 'Да', q14: 4, q15: 4, comment: 'Не хватает части декора и ложек. Остальное ОК.', severity: 'Низкая', problem: 'Нехватка декора и ложек', photos: 4 },
+    { id: 10, date: '2026-07-02', time: '09:30', city: 'Нижний Новгород', location: 'ТЦ Небо, фудкорт', address: 'ул. Большая Покровская, 82', type: 'МБ', wave: '2 волна', auditor: 'Волкова Дарья Олеговна', auditor_type: 'Сотрудник', status: 'Не найдена',
+      q1: null, q2: null, q3: null, q4: null, q5: null, q6: null, q7: null, q8: null, q9: null, q10: null, q11: null, q12: null, q13: null, q14: null, q15: null, comment: 'По указанному адресу точка не обнаружена. Возможно, переехала.', photos: 1 },
+  ];
+
+  let allAudits = DEMO_AUDITS;
+  let filteredAudits = [...allAudits];
+
+  // ============================================================
+  // Score calculation
+  // ============================================================
+  function calcScore(a) {
+    if (a.status !== 'Работает') return null;
+    let total = 0, max = 0;
+    // Pills: positive = 3pts, warning = 1.5pts, negative = 0pts
+    const pillScores = {
+      q1: { 'Новые': 3, 'Старые': 1.5, 'Нет': 0 },
+      q2: { 'OK': 3, 'Повреждение': 0 },
+      q3: { 'OK': 3, 'Нехватка': 1.5, 'Критично': 0 },
+      q4: { 'Новый': 3, 'Старый': 0 },
+      q5: { 'OK': 3, 'Просрочен': 0 },
+      q6: { 'OK': 3, 'Плохо': 0 },
+      q7: { 'Да': 3, 'Нет': 0 },
+      q8: { 'Да': 3, 'Нет': 0 },
+      q9: { 'OK': 3, 'Нехватка': 1.5, 'Критично': 0 },
+      q10: { 'OK': 3, 'Грязные': 1.5, 'Сломаны': 0 },
+      q13: { 'Да': 3, 'Нет': 0 },
+    };
+    for (const [key, map] of Object.entries(pillScores)) {
+      max += 3;
+      if (a[key] != null && map[a[key]] != null) total += map[a[key]];
+    }
+    // Scales: 1-5 (mapped to 0-3)
+    ['q11','q12','q14','q15'].forEach(key => {
+      max += 3;
+      if (a[key] != null) total += (a[key] - 1) * 0.75;
+    });
+    return max > 0 ? Math.round((total / max) * 100) : null;
+  }
+
+  function scoreBadge(score) {
+    if (score === null) return '<span class="badge warn">N/A</span>';
+    const cls = score >= 90 ? 'ok' : score >= 70 ? 'warn' : 'crit';
+    return `<div class="score-bar">
+      <div class="score-num" style="color:var(--${cls === 'ok' ? 'green' : cls === 'warn' ? 'amber' : 'coral'})">${score}%</div>
+      <div class="score-track"><div class="score-fill" style="width:${score}%;background:var(--${cls === 'ok' ? 'green' : cls === 'warn' ? 'amber' : 'coral'})"></div></div>
+    </div>`;
+  }
+
+  function statusBadge(status) {
+    const map = { 'Работает': 'ok', 'Закрыта': 'warn', 'Не найдена': 'crit', 'Временно не работает': 'warn' };
+    return `<span class="badge ${map[status] || 'warn'}">${status}</span>`;
+  }
+
+  // ============================================================
+  // Render
+  // ============================================================
+  function renderStats() {
+    const working = filteredAudits.filter(a => a.status === 'Работает');
+    const scores = working.map(a => calcScore(a)).filter(s => s !== null);
+    const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+
+    document.getElementById('statTotal').textContent = filteredAudits.length;
+    document.getElementById('statAvg').textContent = avg !== null ? avg + '%' : '—';
+    document.getElementById('statAvg').className = 'stat-value ' + (avg >= 90 ? 'green' : avg >= 70 ? 'amber' : 'coral');
+    document.getElementById('statAvgSub').textContent = scores.length ? 'из ' + scores.length + ' работающих' : '';
+    document.getElementById('statProblems').textContent = scores.filter(s => s < 70).length;
+    document.getElementById('statClean').textContent = scores.filter(s => s >= 90).length;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    if (filteredAudits.length === 0) {
+      tbody.innerHTML = '';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('tableCount').textContent = '';
+      return;
+    }
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('tableCount').textContent = filteredAudits.length + ' шт.';
+
+    tbody.innerHTML = filteredAudits.map(a => {
+      const score = calcScore(a);
+      const d = new Date(a.date + 'T' + (a.time || '00:00'));
+      const dateStr = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+      return `<tr onclick="openDetail(${a.id})">
+        <td>${dateStr}</td>
+        <td>${a.city}</td>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.location}</td>
+        <td>${a.type}</td>
+        <td>${a.wave || '—'}</td>
+        <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.auditor}</td>
+        <td>${statusBadge(a.status)}</td>
+        <td>${scoreBadge(score)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function populateFilters() {
+    const cities = [...new Set(allAudits.map(a => a.city))].sort();
+    const citySelect = document.getElementById('filterCity');
+    cities.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      citySelect.appendChild(opt);
+    });
+
+    const auditors = [...new Set(allAudits.map(a => a.auditor))].sort();
+    const audSelect = document.getElementById('filterAuditor');
+    auditors.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = a.split(' ').slice(0, 2).join(' ');
+      audSelect.appendChild(opt);
+    });
+  }
+
+  function applyFilters() {
+    const city = document.getElementById('filterCity').value;
+    const wave = document.getElementById('filterWave').value;
+    const status = document.getElementById('filterStatus').value;
+    const auditor = document.getElementById('filterAuditor').value;
+
+    filteredAudits = allAudits.filter(a => {
+      if (city && a.city !== city) return false;
+      if (wave && a.wave !== wave) return false;
+      if (status && a.status !== status) return false;
+      if (auditor && a.auditor !== auditor) return false;
+      return true;
+    });
+    renderStats();
+    renderTable();
+  }
+
+  // ============================================================
+  // Detail modal
+  // ============================================================
+  function openDetail(id) {
+    const a = allAudits.find(x => x.id === id);
+    if (!a) return;
+    const score = calcScore(a);
+    document.getElementById('modalTitle').textContent = a.city + ' — ' + a.location;
+
+    const checkItems = [
+      ['Чехлы', a.q1], ['Конструкция', a.q2], ['Декор', a.q3], ['Актуальность декора', a.q4],
+      ['Срок годности', a.q5], ['Вид декора', a.q6], ['Шоколад', a.q7], ['Мороженое', a.q8],
+      ['Расходники', a.q9], ['Треи', a.q10], ['Чистота', a.q11 ? a.q11 + '/5' : '—'],
+      ['Брендбук', a.q12 ? a.q12 + '/5' : '—'], ['Персонал', a.q13],
+      ['Вид персонала', a.q14 ? a.q14 + '/5' : '—'], ['Знание продукта', a.q15 ? a.q15 + '/5' : '—'],
+    ];
+
+    let html = `
+      <div class="modal-section">
+        <div class="modal-section-title">Информация</div>
+        <div class="modal-row"><span class="modal-row-label">Дата</span><span class="modal-row-value">${a.date} ${a.time || ''}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Адрес</span><span class="modal-row-value">${a.address}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Тип</span><span class="modal-row-value">${a.type}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Волна</span><span class="modal-row-value">${a.wave || '—'}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Аудитор</span><span class="modal-row-value">${a.auditor}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Статус</span><span class="modal-row-value">${statusBadge(a.status)}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Оценка</span><span class="modal-row-value">${score !== null ? score + '%' : 'N/A'}</span></div>
+      </div>`;
+
+    if (a.status === 'Работает') {
+      html += `<div class="modal-section">
+        <div class="modal-section-title">Чек-лист</div>
+        ${checkItems.map(([label, val]) => `<div class="modal-row"><span class="modal-row-label">${label}</span><span class="modal-row-value">${val || '—'}</span></div>`).join('')}
+      </div>`;
+    }
+
+    if (a.problem) {
+      html += `<div class="modal-section">
+        <div class="modal-section-title">Проблемы</div>
+        <div class="modal-row"><span class="modal-row-label">Критичность</span><span class="modal-row-value">${a.severity || '—'}</span></div>
+        <div class="modal-row"><span class="modal-row-label">Описание</span><span class="modal-row-value" style="text-align:left;max-width:300px">${a.problem}</span></div>
+      </div>`;
+    }
+
+    if (a.comment) {
+      html += `<div class="modal-section">
+        <div class="modal-section-title">Комментарий</div>
+        <div style="font-size:14px;color:var(--text-secondary);line-height:1.5">${a.comment}</div>
+      </div>`;
+    }
+
+    if (a.photos) {
+      html += `<div class="modal-section">
+        <div class="modal-section-title">Фото (${a.photos})</div>
+        <div class="modal-photos">
+          ${Array.from({length: Math.min(a.photos, 6)}, (_, i) => `<div class="modal-photo" style="background:var(--surface);font-size:11px">Фото ${i+1}</div>`).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">В демо-режиме фото не загружены. В боевой версии здесь будут реальные снимки.</div>
+      </div>`;
+    }
+
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  // ============================================================
+  // EXCEL EXPORT
+  // ============================================================
+  function exportToExcel() {
+    const headers = ['Дата', 'Время', 'Город', 'Адрес', 'Локация', 'Тип', 'Волна', 'Аудитор', 'Тип аудитора', 'Статус',
+      'Чехлы', 'Конструкция', 'Декор', 'Актуальность декора', 'Срок годности', 'Вид декора',
+      'Шоколад', 'Мороженое', 'Расходники', 'Треи',
+      'Чистота (1-5)', 'Брендбук (1-5)', 'Наличие персонала', 'Вид персонала (1-5)', 'Знание продукта (1-5)',
+      'Оценка %', 'Критичность', 'Проблема', 'Комментарий', 'Кол-во фото'];
+
+    const rows = filteredAudits.map(a => [
+      a.date, a.time || '', a.city, a.address, a.location, a.type, a.wave || '', a.auditor, a.auditor_type || '', a.status,
+      a.q1 || '', a.q2 || '', a.q3 || '', a.q4 || '', a.q5 || '', a.q6 || '',
+      a.q7 || '', a.q8 || '', a.q9 || '', a.q10 || '',
+      a.q11 || '', a.q12 || '', a.q13 || '', a.q14 || '', a.q15 || '',
+      calcScore(a) || '', a.severity || '', a.problem || '', a.comment || '', a.photos || 0
+    ]);
+
+    // Generate CSV (BOM for Excel compatibility)
+    const BOM = '﻿';
+    const esc = v => {
+      const s = String(v == null ? '' : v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const csv = BOM + [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'audits_magnat_' + new Date().toISOString().slice(0, 10) + '.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+
+    showToast('Файл скачивается...');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 2500);
+  }
+
+  // ============================================================
+  // Init
+  // ============================================================
+  populateFilters();
+  renderStats();
+  renderTable();
+</script>
+</body>
+</html>
